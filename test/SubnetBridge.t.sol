@@ -9,7 +9,7 @@ import "../src/SubnetBridge.sol";
 import "./mocks/MockContractWithoutReceive.sol";
 import "./mocks/MockMinter.sol";
 
-contract SubnetBridgeContractTest is Test {
+contract SubnetBridgeTest is Test {
     event Deposit(address indexed depositor, uint indexed id, uint amount);
     event CompleteTransfer(address indexed beneficiary, uint indexed id, uint amount);
     event FundNonReceiver(address indexed beneficiary, uint amount);
@@ -22,18 +22,18 @@ contract SubnetBridgeContractTest is Test {
 
     uint depositAmount = 1000 * 1e18;
 
-    SubnetBridgeContract bridgeContract;
+    SubnetBridge subnetBridge;
 
     function setUp() public {
         vm.prank(bridgeAdmin);
-        bridgeContract = new SubnetBridgeContract();
+        subnetBridge = new SubnetBridge();
 
         // Mock the minter and transfer ownership to the contract;
-        vm.etch(bridgeContract.minter(), address(new MockMinter()).code);
+        vm.etch(subnetBridge.minter(), address(new MockMinter()).code);
     }
 
     function testOwner() public {
-        assertEq(bridgeContract.owner(), bridgeAdmin);
+        assertEq(subnetBridge.owner(), bridgeAdmin);
     }
 
     function testDeposit() public {
@@ -44,96 +44,96 @@ contract SubnetBridgeContractTest is Test {
 
         vm.expectEmit(true, true, false, true);
         emit Deposit(testUser, 0, depositAmount);
-        bridgeContract.deposit{value: depositAmount}();
+        subnetBridge.deposit{value: depositAmount}();
 
-        assertEq(bridgeContract.depositIdToBlock(0), 500);
-        assertEq(address(bridgeContract).balance, depositAmount);
-        assertEq(bridgeContract.depositId(), 1);
+        assertEq(subnetBridge.depositIdToBlock(0), 500);
+        assertEq(address(subnetBridge).balance, depositAmount);
+        assertEq(subnetBridge.depositId(), 1);
         vm.stopPrank();
     }
 
     function testDepositZero() public {
         vm.startPrank(testUser);
-        vm.expectRevert(SubnetBridgeContract.MustNotBeZero.selector);
-        bridgeContract.deposit{value: 0}();
+        vm.expectRevert(SubnetBridge.MustNotBeZero.selector);
+        subnetBridge.deposit{value: 0}();
         vm.stopPrank();
     }
 
     function testOwnerBorrow() public {
-        assertEq(address(bridgeContract).balance, 0);
+        assertEq(address(subnetBridge).balance, 0);
         testDeposit();
         assertEq(address(bridgeAdmin).balance, 0);
-        assertEq(bridgeContract.ownerWithdrawal(bridgeAdmin), 0);
-        assertEq(address(bridgeContract).balance, depositAmount);
+        assertEq(subnetBridge.ownerWithdrawal(bridgeAdmin), 0);
+        assertEq(address(subnetBridge).balance, depositAmount);
 
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, false, false, true);
         emit OwnerBorrow(bridgeAdmin, depositAmount);
-        bridgeContract.ownerBorrow(depositAmount);
+        subnetBridge.ownerBorrow(depositAmount);
         vm.stopPrank();
 
-        assertEq(bridgeContract.ownerWithdrawal(bridgeAdmin), depositAmount);
+        assertEq(subnetBridge.ownerWithdrawal(bridgeAdmin), depositAmount);
         assertEq(address(bridgeAdmin).balance, depositAmount);
-        assertEq(address(bridgeContract).balance, 0);
+        assertEq(address(subnetBridge).balance, 0);
     }
 
     function testOwnerBorrowNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        bridgeContract.ownerBorrow(depositAmount);
+        subnetBridge.ownerBorrow(depositAmount);
 
         vm.startPrank(testUser);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        bridgeContract.ownerBorrow(depositAmount);
+        subnetBridge.ownerBorrow(depositAmount);
         vm.stopPrank();
     }
 
     function testOwnerBorrowZero() public {
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(SubnetBridgeContract.MustNotBeZero.selector);
-        bridgeContract.ownerBorrow(0);
+        vm.expectRevert(SubnetBridge.MustNotBeZero.selector);
+        subnetBridge.ownerBorrow(0);
         vm.stopPrank();
     }
 
     function testOwnerBorrowInsufficientBalance() public {
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(abi.encodeWithSelector(SubnetBridgeContract.InsufficientBalance.selector, 0, depositAmount));
-        bridgeContract.ownerBorrow(depositAmount);
+        vm.expectRevert(abi.encodeWithSelector(SubnetBridge.InsufficientBalance.selector, 0, depositAmount));
+        subnetBridge.ownerBorrow(depositAmount);
         vm.stopPrank();
     }
 
     function testOwnerReturn() public {
         assertEq(address(bridgeAdmin).balance, 0);
-        assertEq(address(bridgeContract).balance, 0);
-        assertEq(bridgeContract.ownerWithdrawal(bridgeAdmin), 0);
+        assertEq(address(subnetBridge).balance, 0);
+        assertEq(subnetBridge.ownerWithdrawal(bridgeAdmin), 0);
 
         testOwnerBorrow();
         assertEq(address(bridgeAdmin).balance, depositAmount);
-        assertEq(bridgeContract.ownerWithdrawal(bridgeAdmin), depositAmount);
-        assertEq(address(bridgeContract).balance, 0);
+        assertEq(subnetBridge.ownerWithdrawal(bridgeAdmin), depositAmount);
+        assertEq(address(subnetBridge).balance, 0);
 
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, false, false, true);
         emit OwnerReturn(bridgeAdmin, depositAmount);
-        bridgeContract.ownerReturn{value: depositAmount}();
+        subnetBridge.ownerReturn{value: depositAmount}();
 
         assertEq(address(bridgeAdmin).balance, 0);
-        assertEq(bridgeContract.ownerWithdrawal(bridgeAdmin), 0);
+        assertEq(subnetBridge.ownerWithdrawal(bridgeAdmin), 0);
     }
 
     function testOwnerReturnUnderflow() public {
         vm.deal(bridgeAdmin, depositAmount);
         vm.startPrank(bridgeAdmin);
         vm.expectRevert(stdError.arithmeticError);
-        bridgeContract.ownerReturn{value: depositAmount}();
+        subnetBridge.ownerReturn{value: depositAmount}();
     }
 
     function testCompleteTransfer() public {
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, true, false, true);
         emit CompleteTransfer(address(testUser), 0, depositAmount);
-        bridgeContract.completeTransfer(testUser, 0, depositAmount);
+        subnetBridge.completeTransfer(testUser, 0, depositAmount);
         assertEq(address(testUser).balance, depositAmount);
-        assertEq(bridgeContract.crossChainDepositId(), 1);
+        assertEq(subnetBridge.crossChainDepositId(), 1);
         vm.stopPrank();
     }
 
@@ -145,32 +145,32 @@ contract SubnetBridgeContractTest is Test {
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, false, false, true);
         emit FundNonReceiver(address(contractWithoutReceive), depositAmount);
-        bridgeContract.completeTransfer(address(contractWithoutReceive), 0, depositAmount);
+        subnetBridge.completeTransfer(address(contractWithoutReceive), 0, depositAmount);
         assertEq(address(contractWithoutReceive).balance, depositAmount);
     }
 
     function testCompleteTransferZero() public {
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(SubnetBridgeContract.MustNotBeZero.selector);
-        bridgeContract.completeTransfer(testUser, 0, 0);
+        vm.expectRevert(SubnetBridge.MustNotBeZero.selector);
+        subnetBridge.completeTransfer(testUser, 0, 0);
     }
 
     function testCompleteTransferInvalidId() public {
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(abi.encodeWithSelector(SubnetBridgeContract.MustBeSequential.selector, 0, 1));
-        bridgeContract.completeTransfer(testUser, 1, depositAmount);
+        vm.expectRevert(abi.encodeWithSelector(SubnetBridge.MustBeSequential.selector, 0, 1));
+        subnetBridge.completeTransfer(testUser, 1, depositAmount);
     }
 
     function testCompleteTransferNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        bridgeContract.completeTransfer(testUser, 0, depositAmount);
+        subnetBridge.completeTransfer(testUser, 0, depositAmount);
     }
 
     function testCompleteTransferRequireMintNative() public {
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, false, false, true);
-        emit MintNative(address(bridgeContract),  depositAmount);
-        bridgeContract.completeTransfer(testUser, 0, depositAmount);
+        emit MintNative(address(subnetBridge),  depositAmount);
+        subnetBridge.completeTransfer(testUser, 0, depositAmount);
         assertEq(address(testUser).balance, depositAmount);
     }
 }

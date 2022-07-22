@@ -16,7 +16,7 @@ contract FundNonReceivers {
     }
 }
 
-contract SubnetBridgeContract is Ownable {
+contract SubnetBridge is Ownable {
     error MustNotBeZero();
     error MustBeSequential(uint curr, uint requested);
     error InsufficientBalance(uint avail, uint requested);

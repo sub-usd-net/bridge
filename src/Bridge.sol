@@ -5,7 +5,7 @@ import "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-contract BridgeContract is Ownable {
+contract Bridge is Ownable {
     using SafeERC20 for IERC20;
 
     error MustBeSequential(uint curr, uint requested);

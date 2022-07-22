@@ -7,7 +7,7 @@ import "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import "../src/Bridge.sol";
 import "./mocks/MockToken.sol";
 
-contract BridgeContractTest is Test {
+contract BridgeTest is Test {
     event Deposit(address indexed depositor, uint indexed id, uint amount);
     event CompleteTransfer(address indexed beneficiary, uint indexed id, uint amount);
     event OwnerBorrow(address indexed owner, uint amount);
@@ -21,16 +21,16 @@ contract BridgeContractTest is Test {
     uint depositAmount = 1000 * 1e6;
 
     MockToken mockToken;
-    BridgeContract bridgeContract;
+    Bridge bridge;
 
     function setUp() public {
         vm.prank(tokenAdmin);
         mockToken = new MockToken("Mock", "MO");
 
         vm.prank(bridgeAdmin);
-        bridgeContract = new BridgeContract(address(mockToken));
+        bridge = new Bridge(address(mockToken));
 
-        assertEq(address(bridgeContract.stableToken()), address(mockToken));
+        assertEq(address(bridge.stableToken()), address(mockToken));
     }
 
     function fundUserWithToken(address user_, uint amt) private {
@@ -39,110 +39,110 @@ contract BridgeContractTest is Test {
     }
 
     function approveTokenOnBridge(uint amt) private {
-        IERC20(mockToken).approve(address(bridgeContract), amt);
+        IERC20(mockToken).approve(address(bridge), amt);
     }
 
     function testDeposit() public {
         uint bn = 500;
         vm.roll(500);
 
-        assertEq(mockToken.balanceOf(address(bridgeContract)), 0);
-        assertEq(bridgeContract.depositId(), 0);
+        assertEq(mockToken.balanceOf(address(bridge)), 0);
+        assertEq(bridge.depositId(), 0);
 
         fundUserWithToken(testUserDepositor, depositAmount);
         vm.startPrank(testUserDepositor);
         approveTokenOnBridge(depositAmount);
         vm.expectEmit(true, true, false, true);
         emit Deposit(testUserDepositor, 0, depositAmount);
-        bridgeContract.deposit(depositAmount);
+        bridge.deposit(depositAmount);
         vm.stopPrank();
 
-        assertEq(bridgeContract.depositIdToBlock(0), bn);
-        assertEq(bridgeContract.depositId(), 1);
-        assertEq(mockToken.balanceOf(address(bridgeContract)), depositAmount);
+        assertEq(bridge.depositIdToBlock(0), bn);
+        assertEq(bridge.depositId(), 1);
+        assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
     }
 
     function testDepositInsufficientBalance() public {
         approveTokenOnBridge(depositAmount);
         vm.startPrank(testUserDepositor);
-        vm.expectRevert(abi.encodeWithSelector(BridgeContract.InsufficientBalance.selector, 0, depositAmount));
-        bridgeContract.deposit(depositAmount);
+        vm.expectRevert(abi.encodeWithSelector(Bridge.InsufficientBalance.selector, 0, depositAmount));
+        bridge.deposit(depositAmount);
         vm.stopPrank();
     }
 
     function testDepositInsufficientAllowance() public {
         fundUserWithToken(testUserDepositor, depositAmount);
         vm.startPrank(testUserDepositor);
-        vm.expectRevert(abi.encodeWithSelector(BridgeContract.InsufficientAllowance.selector, 0, depositAmount));
-        bridgeContract.deposit(depositAmount);
+        vm.expectRevert(abi.encodeWithSelector(Bridge.InsufficientAllowance.selector, 0, depositAmount));
+        bridge.deposit(depositAmount);
         vm.stopPrank();
     }
 
     function testDepositZero() public {
         approveTokenOnBridge(depositAmount);
         vm.startPrank(testUserDepositor);
-        vm.expectRevert(BridgeContract.MustNotBeZero.selector);
-        bridgeContract.deposit(0);
+        vm.expectRevert(Bridge.MustNotBeZero.selector);
+        bridge.deposit(0);
         vm.stopPrank();
     }
 
     function testOwnerBorrow() public {
-        assertEq(mockToken.balanceOf(address(bridgeContract)), 0);
+        assertEq(mockToken.balanceOf(address(bridge)), 0);
         testDeposit();
         assertEq(mockToken.balanceOf(bridgeAdmin), 0);
-        assertEq(mockToken.balanceOf(address(bridgeContract)), depositAmount);
+        assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
 
         uint borrowAmount = depositAmount;
 
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, false, false, true);
         emit OwnerBorrow(bridgeAdmin, borrowAmount);
-        bridgeContract.ownerBorrow(borrowAmount);
-        assertEq(mockToken.balanceOf(address(bridgeContract)), 0);
+        bridge.ownerBorrow(borrowAmount);
+        assertEq(mockToken.balanceOf(address(bridge)), 0);
         assertEq(mockToken.balanceOf(bridgeAdmin), borrowAmount);
         vm.stopPrank();
     }
 
     function testOwnerBorrowNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        bridgeContract.ownerBorrow(depositAmount);
+        bridge.ownerBorrow(depositAmount);
     }
 
     function testOwnerBorrowZero() public {
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(BridgeContract.MustNotBeZero.selector);
-        bridgeContract.ownerBorrow(0);
+        vm.expectRevert(Bridge.MustNotBeZero.selector);
+        bridge.ownerBorrow(0);
         vm.stopPrank();
     }
 
     function testOwnerReturn() public {
-        assertEq(bridgeContract.ownerWithdrawals(bridgeAdmin), 0);
+        assertEq(bridge.ownerWithdrawals(bridgeAdmin), 0);
         testOwnerBorrow();
-        assertEq(bridgeContract.ownerWithdrawals(bridgeAdmin), depositAmount);
+        assertEq(bridge.ownerWithdrawals(bridgeAdmin), depositAmount);
 
         vm.startPrank(bridgeAdmin);
         approveTokenOnBridge(depositAmount);
 
         vm.expectEmit(true, false, false, true);
         emit OwnerReturn(bridgeAdmin, depositAmount / 2);
-        bridgeContract.ownerReturn(depositAmount / 2);
-        assertEq(bridgeContract.ownerWithdrawals(bridgeAdmin), depositAmount / 2);
+        bridge.ownerReturn(depositAmount / 2);
+        assertEq(bridge.ownerWithdrawals(bridgeAdmin), depositAmount / 2);
 
         vm.expectEmit(true, false, false, true);
         emit OwnerReturn(bridgeAdmin, depositAmount / 2);
-        bridgeContract.ownerReturn(depositAmount / 2);
-        assertEq(bridgeContract.ownerWithdrawals(bridgeAdmin), 0);
+        bridge.ownerReturn(depositAmount / 2);
+        assertEq(bridge.ownerWithdrawals(bridgeAdmin), 0);
         vm.stopPrank();
     }
 
     function testOwnerReturnInsufficientAllowance() public {
-        assertEq(bridgeContract.ownerWithdrawals(bridgeAdmin), 0);
+        assertEq(bridge.ownerWithdrawals(bridgeAdmin), 0);
         testOwnerBorrow();
-        assertEq(bridgeContract.ownerWithdrawals(bridgeAdmin), depositAmount);
+        assertEq(bridge.ownerWithdrawals(bridgeAdmin), depositAmount);
 
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(abi.encodeWithSelector(BridgeContract.InsufficientAllowance.selector, 0, depositAmount));
-        bridgeContract.ownerReturn(depositAmount);
+        vm.expectRevert(abi.encodeWithSelector(Bridge.InsufficientAllowance.selector, 0, depositAmount));
+        bridge.ownerReturn(depositAmount);
     }
 
     function testOwnerReturnUnderflow() public {
@@ -150,49 +150,49 @@ contract BridgeContractTest is Test {
         vm.startPrank(bridgeAdmin);
         approveTokenOnBridge(depositAmount);
         vm.expectRevert(stdError.arithmeticError);
-        bridgeContract.ownerReturn(1);
+        bridge.ownerReturn(1);
         vm.stopPrank();
     }
 
     function testCompleteTransfer() public {
-        assertEq(bridgeContract.depositId(), 0);
+        assertEq(bridge.depositId(), 0);
         testDeposit();
-        assertEq(bridgeContract.depositId(), 1);
-        assertEq(mockToken.balanceOf(address(bridgeContract)), depositAmount);
+        assertEq(bridge.depositId(), 1);
+        assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
         assertEq(mockToken.balanceOf(testUserReceiver), 0);
 
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, true, false, true);
         emit CompleteTransfer(testUserReceiver, 0, depositAmount / 2);
-        bridgeContract.completeTransfer(testUserReceiver, 0, depositAmount / 2);
+        bridge.completeTransfer(testUserReceiver, 0, depositAmount / 2);
         vm.stopPrank();
 
-        assertEq(mockToken.balanceOf(address(bridgeContract)), depositAmount / 2);
+        assertEq(mockToken.balanceOf(address(bridge)), depositAmount / 2);
         assertEq(mockToken.balanceOf(testUserReceiver), depositAmount / 2);
     }
 
     function testCompleteTransferZero() public {
-        assertEq(bridgeContract.depositId(), 0);
+        assertEq(bridge.depositId(), 0);
         testDeposit();
-        assertEq(bridgeContract.depositId(), 1);
-        assertEq(mockToken.balanceOf(address(bridgeContract)), depositAmount);
+        assertEq(bridge.depositId(), 1);
+        assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
         assertEq(mockToken.balanceOf(testUserReceiver), 0);
 
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(BridgeContract.MustNotBeZero.selector);
-        bridgeContract.completeTransfer(testUserReceiver, 0, 0);
+        vm.expectRevert(Bridge.MustNotBeZero.selector);
+        bridge.completeTransfer(testUserReceiver, 0, 0);
     }
 
     function testCompleteTransferInvalidId() public {
         testDeposit();
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(abi.encodeWithSelector(BridgeContract.MustBeSequential.selector, 0, 1));
-        bridgeContract.completeTransfer(testUserDepositor, 1, depositAmount);
+        vm.expectRevert(abi.encodeWithSelector(Bridge.MustBeSequential.selector, 0, 1));
+        bridge.completeTransfer(testUserDepositor, 1, depositAmount);
     }
 
     function testCompleteTransferNotOwner() public {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        bridgeContract.completeTransfer(testUserDepositor, 0, depositAmount);
+        bridge.completeTransfer(testUserDepositor, 0, depositAmount);
     }
 
 }
