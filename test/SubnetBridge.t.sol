@@ -23,7 +23,6 @@ contract SubnetBridgeContractTest is Test {
     uint depositAmount = 1000 * 1e18;
 
     SubnetBridgeContract bridgeContract;
-    MockContractWithoutReceive contractWithoutReceive = new MockContractWithoutReceive();
 
     function setUp() public {
         vm.prank(bridgeAdmin);
@@ -141,6 +140,7 @@ contract SubnetBridgeContractTest is Test {
     // The SubnetBridge uses the selfdestruct method to transfer native tokens
     // if the receiver is a contract that did not implement receive()
     function testCompleteTransferToNonReceiver() public {
+        MockContractWithoutReceive contractWithoutReceive = new MockContractWithoutReceive();
         assertEq(address(contractWithoutReceive).balance, 0);
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, false, false, true);
