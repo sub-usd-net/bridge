@@ -37,7 +37,9 @@ contract SubnetBridgeContract is Ownable {
     mapping(uint => uint) public depositIdToBlock;
 
     function deposit() public payable {
-        require(msg.value != 0, "must deposit greater than 0");
+        if (msg.value == 0) {
+            revert MustNotBeZero();
+        }
         emit Deposit(msg.sender, depositId, msg.value);
         depositIdToBlock[depositId] = block.number;
         depositId++;

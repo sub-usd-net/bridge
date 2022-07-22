@@ -55,7 +55,7 @@ contract SubnetBridgeContractTest is Test {
 
     function testDepositZero() public {
         vm.startPrank(testUser);
-        vm.expectRevert(bytes("must deposit greater than 0"));
+        vm.expectRevert(SubnetBridgeContract.MustNotBeZero.selector);
         bridgeContract.deposit{value: 0}();
         vm.stopPrank();
     }
