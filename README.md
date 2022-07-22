@@ -15,10 +15,4 @@
 
 ### Testing
 
-Open up a terminal and run:
-
-`$ anvil` to start local test network.
-
-Open up another terminal and run:
-
-`$ forge test --rpc-url http://127.0.0.1:8545` to test against the local network.
+`forge test`
