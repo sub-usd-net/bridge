@@ -34,6 +34,9 @@ contract BridgeContract is Ownable {
     // by this contract and is then expected to be minted on the other side of the bridge
     IERC20 public stableToken;
 
+    // util for bridging service to make it unnecessary to maintain an off-chain index
+    mapping(uint => uint) public depositIdToBlock;
+
     constructor(address _stableToken) {
         stableToken = IERC20(_stableToken);
     }
@@ -44,6 +47,7 @@ contract BridgeContract is Ownable {
 
         stableToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Deposit(msg.sender, depositId, amount);
+        depositIdToBlock[depositId] = block.number;
         depositId++;
     }
 

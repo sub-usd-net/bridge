@@ -38,6 +38,8 @@ contract SubnetBridgeContractTest is Test {
     }
 
     function testDeposit() public {
+        uint bn = 500;
+        vm.roll(bn);
         vm.deal(testUser, depositAmount);
         vm.startPrank(testUser);
 
@@ -45,6 +47,7 @@ contract SubnetBridgeContractTest is Test {
         emit Deposit(testUser, 0, depositAmount);
         bridgeContract.deposit{value: depositAmount}();
 
+        assertEq(bridgeContract.depositIdToBlock(0), 500);
         assertEq(address(bridgeContract).balance, depositAmount);
         assertEq(bridgeContract.depositId(), 1);
         vm.stopPrank();

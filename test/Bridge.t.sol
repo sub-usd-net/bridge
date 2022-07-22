@@ -43,8 +43,12 @@ contract BridgeContractTest is Test {
     }
 
     function testDeposit() public {
+        uint bn = 500;
+        vm.roll(500);
+
         assertEq(mockToken.balanceOf(address(bridgeContract)), 0);
         assertEq(bridgeContract.depositId(), 0);
+
         fundUserWithToken(testUserDepositor, depositAmount);
         vm.startPrank(testUserDepositor);
         approveTokenOnBridge(depositAmount);
@@ -53,6 +57,7 @@ contract BridgeContractTest is Test {
         bridgeContract.deposit(depositAmount);
         vm.stopPrank();
 
+        assertEq(bridgeContract.depositIdToBlock(0), bn);
         assertEq(bridgeContract.depositId(), 1);
         assertEq(mockToken.balanceOf(address(bridgeContract)), depositAmount);
     }

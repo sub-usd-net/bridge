@@ -33,9 +33,13 @@ contract SubnetBridgeContract is Ownable {
     mapping(address => uint) public ownerWithdrawal;
     address public immutable minter = 0x0200000000000000000000000000000000000001;
 
+    // util for bridging service to make it unnecessary to maintain an off-chain index
+    mapping(uint => uint) public depositIdToBlock;
+
     function deposit() public payable {
         require(msg.value != 0, "must deposit greater than 0");
         emit Deposit(msg.sender, depositId, msg.value);
+        depositIdToBlock[depositId] = block.number;
         depositId++;
     }
 
