@@ -59,9 +59,9 @@ contract SubnetBridgeTest is Test {
         assertEq(subnetBridge.ownerWithdrawal(bridgeAdmin), 0);
         assertEq(address(subnetBridge).balance, depositAmount);
 
-        (address user, uint amount) = subnetBridge.getDepositInfo(0);
-        assertEq(user, testUser);
-        assertEq(amount, depositAmount);
+        SubnetBridge.DepositInfo memory info = subnetBridge.getDepositInfo(0);
+        assertEq(info.user, testUser);
+        assertEq(info.amount, depositAmount);
     }
 
     function testDepositZero() public {

@@ -16,10 +16,6 @@ contract FundNonReceivers {
     }
 }
 
-struct DepositInfo {
-    address user;
-    uint amount;
-}
 
 contract SubnetBridge is Ownable {
     error MustNotBeZero();
@@ -33,14 +29,19 @@ contract SubnetBridge is Ownable {
     event OwnerBorrow(address indexed owner, uint amount);
     event OwnerReturn(address indexed owner, uint amount);
 
+    struct DepositInfo {
+        address user;
+        uint amount;
+    }
+
     uint public depositId = 0;
     uint public crossChainDepositId = 0;
     mapping(address => uint) public ownerWithdrawal;
-    mapping(uint => DepositInfo) public depositIdToDepositInfo;
     address public immutable minter = 0x0200000000000000000000000000000000000001;
 
-    // util for bridging service to make it unnecessary to maintain an off-chain index
+    // utils for bridging service to make it unnecessary to maintain an off-chain index
     mapping(uint => uint) public depositIdToBlock;
+    mapping(uint => DepositInfo) public depositIdToDepositInfo;
 
     function deposit() public payable {
         if (msg.value == 0) {
@@ -103,8 +104,8 @@ contract SubnetBridge is Ownable {
         return (depositId, crossChainDepositId);
     }
 
-    function getDepositInfo(uint depositId) public returns (address, uint) {
-        return (depositIdToDepositInfo[depositId].user, depositIdToDepositInfo[depositId].amount);
+    function getDepositInfo(uint depositId_) public view returns (DepositInfo memory) {
+        return depositIdToDepositInfo[depositId_];
     }
 }
 

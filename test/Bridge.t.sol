@@ -7,6 +7,11 @@ import "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import "../src/Bridge.sol";
 import "./mocks/MockToken.sol";
 
+struct DI {
+    address user;
+    uint amount;
+}
+
 contract BridgeTest is Test {
     event Deposit(address indexed depositor, uint indexed id, uint amount);
     event CompleteTransfer(address indexed beneficiary, uint indexed id, uint amount);
@@ -69,9 +74,9 @@ contract BridgeTest is Test {
         assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
         assertEq(mockToken.balanceOf(testUserReceiver), 0);
 
-        (address user, uint amount) = bridge.getDepositInfo(0);
-        assertEq(user, testUserDepositor);
-        assertEq(amount, depositAmount);
+        Bridge.DepositInfo memory info = bridge.getDepositInfo(0);
+        assertEq(info.user, testUserDepositor);
+        assertEq(info.amount, depositAmount);
     }
 
     function testDepositInsufficientBalance() public {

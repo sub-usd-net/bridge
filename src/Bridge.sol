@@ -5,10 +5,6 @@ import "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
-struct DepositInfo {
-    address user;
-    uint amount;
-}
 
 contract Bridge is Ownable {
     using SafeERC20 for IERC20;
@@ -23,6 +19,11 @@ contract Bridge is Ownable {
     event OwnerBorrow(address indexed owner, uint amount);
     event OwnerReturn(address indexed owner, uint amount);
 
+    struct DepositInfo {
+        address user;
+        uint amount;
+    }
+
     // depositId is incremented after each deposit to this side of the bridge
     // and it should be used when fulfilling the transfer on the other side of the bridge
     uint public depositId = 0;
@@ -35,14 +36,14 @@ contract Bridge is Ownable {
     // ownerWithdrawals tracks owner borrow balance
     mapping(address => uint) public ownerWithdrawals;
 
-    mapping(uint => DepositInfo) public depositIdToDepositInfo;
 
     // stableToken points to the C-Chain stable coin token (such as USDC) that is accepted
     // by this contract and is then expected to be minted on the other side of the bridge
     IERC20 public stableToken;
 
-    // util for bridging service to make it unnecessary to maintain an off-chain index
+    // utils for bridging service to make it unnecessary to maintain an off-chain index
     mapping(uint => uint) public depositIdToBlock;
+    mapping(uint => DepositInfo) public depositIdToDepositInfo;
 
     constructor(address _stableToken) {
         stableToken = IERC20(_stableToken);
@@ -111,7 +112,7 @@ contract Bridge is Ownable {
         return (depositId, crossChainDepositId);
     }
 
-    function getDepositInfo(uint depositId) public returns (address, uint) {
-        return (depositIdToDepositInfo[depositId].user, depositIdToDepositInfo[depositId].amount);
+    function getDepositInfo(uint depositId_) public view returns (DepositInfo memory) {
+        return depositIdToDepositInfo[depositId_];
     }
 }
