@@ -5,6 +5,11 @@ import "../lib/openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
+struct DepositInfo {
+    address user;
+    uint amount;
+}
+
 contract Bridge is Ownable {
     using SafeERC20 for IERC20;
 
@@ -30,6 +35,8 @@ contract Bridge is Ownable {
     // ownerWithdrawals tracks owner borrow balance
     mapping(address => uint) public ownerWithdrawals;
 
+    mapping(uint => DepositInfo) public depositIdToDepositInfo;
+
     // stableToken points to the C-Chain stable coin token (such as USDC) that is accepted
     // by this contract and is then expected to be minted on the other side of the bridge
     IERC20 public stableToken;
@@ -48,6 +55,10 @@ contract Bridge is Ownable {
         stableToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Deposit(msg.sender, depositId, amount);
         depositIdToBlock[depositId] = block.number;
+        depositIdToDepositInfo[depositId] = DepositInfo({
+            user: msg.sender,
+            amount: amount
+        });
         depositId++;
     }
 
@@ -100,4 +111,7 @@ contract Bridge is Ownable {
         return (depositId, crossChainDepositId);
     }
 
+    function getDepositInfo(uint depositId) public returns (address, uint) {
+        return (depositIdToDepositInfo[depositId].user, depositIdToDepositInfo[depositId].amount);
+    }
 }

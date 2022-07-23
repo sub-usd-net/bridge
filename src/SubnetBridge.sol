@@ -16,6 +16,11 @@ contract FundNonReceivers {
     }
 }
 
+struct DepositInfo {
+    address user;
+    uint amount;
+}
+
 contract SubnetBridge is Ownable {
     error MustNotBeZero();
     error MustBeSequential(uint curr, uint requested);
@@ -31,6 +36,7 @@ contract SubnetBridge is Ownable {
     uint public depositId = 0;
     uint public crossChainDepositId = 0;
     mapping(address => uint) public ownerWithdrawal;
+    mapping(uint => DepositInfo) public depositIdToDepositInfo;
     address public immutable minter = 0x0200000000000000000000000000000000000001;
 
     // util for bridging service to make it unnecessary to maintain an off-chain index
@@ -42,6 +48,10 @@ contract SubnetBridge is Ownable {
         }
         emit Deposit(msg.sender, depositId, msg.value);
         depositIdToBlock[depositId] = block.number;
+        depositIdToDepositInfo[depositId] = DepositInfo({
+            user: msg.sender,
+            amount: msg.value
+        });
         depositId++;
     }
 
@@ -93,5 +103,8 @@ contract SubnetBridge is Ownable {
         return (depositId, crossChainDepositId);
     }
 
+    function getDepositInfo(uint depositId) public returns (address, uint) {
+        return (depositIdToDepositInfo[depositId].user, depositIdToDepositInfo[depositId].amount);
+    }
 }
 

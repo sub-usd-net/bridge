@@ -52,6 +52,18 @@ contract SubnetBridgeTest is Test {
         vm.stopPrank();
     }
 
+    function testDepositAndDepositInfo() public {
+        assertEq(address(subnetBridge).balance, 0);
+        testDeposit();
+        assertEq(address(bridgeAdmin).balance, 0);
+        assertEq(subnetBridge.ownerWithdrawal(bridgeAdmin), 0);
+        assertEq(address(subnetBridge).balance, depositAmount);
+
+        (address user, uint amount) = subnetBridge.getDepositInfo(0);
+        assertEq(user, testUser);
+        assertEq(amount, depositAmount);
+    }
+
     function testDepositZero() public {
         vm.startPrank(testUser);
         vm.expectRevert(SubnetBridge.MustNotBeZero.selector);

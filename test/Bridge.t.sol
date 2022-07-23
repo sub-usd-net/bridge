@@ -62,6 +62,18 @@ contract BridgeTest is Test {
         assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
     }
 
+    function testDepositAndDepositInfo() public {
+        assertEq(bridge.depositId(), 0);
+        testDeposit();
+        assertEq(bridge.depositId(), 1);
+        assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
+        assertEq(mockToken.balanceOf(testUserReceiver), 0);
+
+        (address user, uint amount) = bridge.getDepositInfo(0);
+        assertEq(user, testUserDepositor);
+        assertEq(amount, depositAmount);
+    }
+
     function testDepositInsufficientBalance() public {
         approveTokenOnBridge(depositAmount);
         vm.startPrank(testUserDepositor);
