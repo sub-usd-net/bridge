@@ -96,4 +96,8 @@ contract Bridge is Ownable {
         }
     }
 
+    function currentIds() public view returns (uint, uint) {
+        return (depositId, crossChainDepositId);
+    }
+
 }

@@ -89,5 +89,9 @@ contract SubnetBridge is Ownable {
         emit MintNative(beneficiary, amount);
     }
 
+    function currentIds() public view returns (uint, uint) {
+        return (depositId, crossChainDepositId);
+    }
+
 }
 
