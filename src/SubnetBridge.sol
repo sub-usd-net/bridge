@@ -47,19 +47,19 @@ contract SubnetBridge is Ownable {
         if (msg.value == 0) {
             revert MustNotBeZero();
         }
+        depositId++;
         emit Deposit(msg.sender, depositId, msg.value);
         depositIdToBlock[depositId] = block.number;
         depositIdToDepositInfo[depositId] = DepositInfo({
             user: msg.sender,
             amount: msg.value
         });
-        depositId++;
     }
 
     function completeTransfer(address beneficiary, uint targetId, uint amount) public onlyOwner {
         if (amount == 0) {
             revert MustNotBeZero();
-        } else if (crossChainDepositId != targetId) {
+        } else if (crossChainDepositId + 1 != targetId) {
             revert MustBeSequential(crossChainDepositId, targetId);
         }
 
@@ -72,9 +72,8 @@ contract SubnetBridge is Ownable {
             new FundNonReceivers{value: amount}(beneficiary);
             emit FundNonReceiver(beneficiary, amount);
         }
-        emit CompleteTransfer(beneficiary, crossChainDepositId, amount);
-
         crossChainDepositId++;
+        emit CompleteTransfer(beneficiary, crossChainDepositId, amount);
     }
 
     function ownerReturn() public payable onlyOwner {

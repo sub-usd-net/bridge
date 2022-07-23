@@ -58,11 +58,11 @@ contract BridgeTest is Test {
         vm.startPrank(testUserDepositor);
         approveTokenOnBridge(depositAmount);
         vm.expectEmit(true, true, false, true);
-        emit Deposit(testUserDepositor, 0, depositAmount);
+        emit Deposit(testUserDepositor, 1, depositAmount);
         bridge.deposit(depositAmount);
         vm.stopPrank();
 
-        assertEq(bridge.depositIdToBlock(0), bn);
+        assertEq(bridge.depositIdToBlock(1), bn);
         assertEq(bridge.depositId(), 1);
         assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
     }
@@ -74,7 +74,7 @@ contract BridgeTest is Test {
         assertEq(mockToken.balanceOf(address(bridge)), depositAmount);
         assertEq(mockToken.balanceOf(testUserReceiver), 0);
 
-        Bridge.DepositInfo memory info = bridge.getDepositInfo(0);
+        Bridge.DepositInfo memory info = bridge.getDepositInfo(1);
         assertEq(info.user, testUserDepositor);
         assertEq(info.amount, depositAmount);
     }
@@ -180,8 +180,8 @@ contract BridgeTest is Test {
 
         vm.startPrank(bridgeAdmin);
         vm.expectEmit(true, true, false, true);
-        emit CompleteTransfer(testUserReceiver, 0, depositAmount / 2);
-        bridge.completeTransfer(testUserReceiver, 0, depositAmount / 2);
+        emit CompleteTransfer(testUserReceiver, 1, depositAmount / 2);
+        bridge.completeTransfer(testUserReceiver, 1, depositAmount / 2);
         vm.stopPrank();
 
         assertEq(mockToken.balanceOf(address(bridge)), depositAmount / 2);
@@ -197,14 +197,14 @@ contract BridgeTest is Test {
 
         vm.startPrank(bridgeAdmin);
         vm.expectRevert(Bridge.MustNotBeZero.selector);
-        bridge.completeTransfer(testUserReceiver, 0, 0);
+        bridge.completeTransfer(testUserReceiver, 1, 0);
     }
 
     function testCompleteTransferInvalidId() public {
         testDeposit();
         vm.startPrank(bridgeAdmin);
-        vm.expectRevert(abi.encodeWithSelector(Bridge.MustBeSequential.selector, 0, 1));
-        bridge.completeTransfer(testUserDepositor, 1, depositAmount);
+        vm.expectRevert(abi.encodeWithSelector(Bridge.MustBeSequential.selector, 0, 2));
+        bridge.completeTransfer(testUserDepositor, 2, depositAmount);
     }
 
     function testCompleteTransferNotOwner() public {

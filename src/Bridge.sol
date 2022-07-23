@@ -54,24 +54,24 @@ contract Bridge is Ownable {
         _validateAllowance(msg.sender, amount);
 
         stableToken.safeTransferFrom(msg.sender, address(this), amount);
+        depositId++;
         emit Deposit(msg.sender, depositId, amount);
         depositIdToBlock[depositId] = block.number;
         depositIdToDepositInfo[depositId] = DepositInfo({
             user: msg.sender,
             amount: amount
         });
-        depositId++;
     }
 
     function completeTransfer(address beneficiary, uint targetId, uint amount) public onlyOwner {
-        if (crossChainDepositId != targetId) {
+        if (crossChainDepositId + 1 != targetId) {
             revert MustBeSequential(crossChainDepositId, targetId);
         }
         _validateBalance(address(this), amount);
 
         stableToken.safeTransfer(beneficiary, amount);
-        emit CompleteTransfer(beneficiary, crossChainDepositId, amount);
         crossChainDepositId++;
+        emit CompleteTransfer(beneficiary, crossChainDepositId, amount);
     }
 
     function ownerBorrow(uint amount) public onlyOwner {
