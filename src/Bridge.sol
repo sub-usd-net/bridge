@@ -42,23 +42,29 @@ contract Bridge is Ownable {
     IERC20 public stableToken;
 
     // utils for bridging service to make it unnecessary to maintain an off-chain index
-    mapping(uint => uint) public depositIdToBlock;
     mapping(uint => DepositInfo) public depositIdToDepositInfo;
 
     constructor(address _stableToken) {
         stableToken = IERC20(_stableToken);
     }
 
-    function deposit(uint amount) public {
-        _validateBalance(msg.sender, amount);
-        _validateAllowance(msg.sender, amount);
+    function deposit(uint amount) external {
+        _deposit(msg.sender, msg.sender, amount);
+    }
 
-        stableToken.safeTransferFrom(msg.sender, address(this), amount);
+    function depositOnBehalfOf(address forUser, uint amount) external {
+        _deposit(msg.sender, forUser, amount);
+    }
+
+    function _deposit(address sender, address user, uint amount) private {
+        _validateBalance(sender, amount);
+        _validateAllowance(sender, amount);
+
+        stableToken.safeTransferFrom(sender, address(this), amount);
         depositId++;
-        emit Deposit(msg.sender, depositId, amount);
-        depositIdToBlock[depositId] = block.number;
+        emit Deposit(user, depositId, amount);
         depositIdToDepositInfo[depositId] = DepositInfo({
-            user: msg.sender,
+            user: user,
             amount: amount
         });
     }

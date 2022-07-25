@@ -46,7 +46,6 @@ contract SubnetBridgeTest is Test {
         emit Deposit(testUser, 1, depositAmount);
         subnetBridge.deposit{value: depositAmount}();
 
-        assertEq(subnetBridge.depositIdToBlock(1), 500);
         assertEq(address(subnetBridge).balance, depositAmount);
         assertEq(subnetBridge.depositId(), 1);
         vm.stopPrank();

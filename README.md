@@ -21,3 +21,15 @@ values, one can quicly and easily surmise the number of outstanding transfers.
 ### Testing
 
 `forge test`
+
+### Current Deployments
+
+#### Fuji C-Chain
+
+Bridge: 0xb241c0cd258cae6545f4a1ee847d06115c210445
+FakeStablecoin: 0x438c3cea05705460b82b5be5a0178c6bdd84926c
+BridgingHelper: 0x6a20d061f98f50e7fa9037b5d9ed49692bc500f6
+
+#### Subnet
+
+Bridge: 0x1b6ceba69e7b07443f12c35313da7e63c2acee18
