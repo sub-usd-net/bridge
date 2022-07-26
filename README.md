@@ -26,10 +26,10 @@ values, one can quicly and easily surmise the number of outstanding transfers.
 
 #### Fuji C-Chain
 
-Bridge: 0x9958a6392ad089c764a3d100056a8ddb00d15613
-FakeStablecoin: 0xd58bbe0fbf00fd6b664f313d1d8b200bf330577f
-BridgingHelper: 0xb71c9c2caf106348319a708be99199ed12aade6f
+* Bridge: 0x9958a6392ad089c764a3d100056a8ddb00d15613
+* FakeStablecoin: 0xd58bbe0fbf00fd6b664f313d1d8b200bf330577f
+* BridgingHelper: 0xb71c9c2caf106348319a708be99199ed12aade6f
 
 #### Subnet
 
-Bridge: 0x1b6ceba69e7b07443f12c35313da7e63c2acee18
+* Bridge: 0x1b6ceba69e7b07443f12c35313da7e63c2acee18
